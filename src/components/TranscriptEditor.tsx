@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Copy, Download, Trash2, CheckCircle } from 'lucide-react';
+import { Copy, Download, Trash2, Check, Save } from 'lucide-react';
 
 interface TranscriptEditorProps {
   text: string;
@@ -9,13 +9,7 @@ interface TranscriptEditorProps {
   onExport: () => void;
 }
 
-export const TranscriptEditor = ({
-  text,
-  isLoading,
-  onSave,
-  onDelete,
-  onExport,
-}: TranscriptEditorProps) => {
+export const TranscriptEditor = ({ text, isLoading, onSave, onDelete, onExport }: TranscriptEditorProps) => {
   const [editedText, setEditedText] = useState(text);
   const [isCopied, setIsCopied] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -26,9 +20,8 @@ export const TranscriptEditor = ({
   }, [text]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newText = e.target.value;
-    setEditedText(newText);
-    setHasChanges(newText !== text);
+    setEditedText(e.target.value);
+    setHasChanges(e.target.value !== text);
   };
 
   const handleCopy = () => {
@@ -38,79 +31,68 @@ export const TranscriptEditor = ({
     });
   };
 
-  const handleSave = () => {
-    onSave(editedText);
-    setHasChanges(false);
-  };
-
-  const characterCount = editedText.length;
-  const wordCount = editedText
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 0).length;
+  const wordCount = editedText.trim().split(/\s+/).filter((w) => w.length > 0).length;
+  const charCount = editedText.length;
 
   return (
-    <div className="space-y-4">
-      {/* Transcript Editor */}
-      <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+    <div className="space-y-3">
+      {/* Textarea */}
+      <div className="relative">
         <textarea
           value={editedText}
           onChange={handleTextChange}
           disabled={isLoading}
-          placeholder="Your transcription will appear here..."
-          className="w-full h-64 p-4 text-slate-900 dark:text-white bg-white dark:bg-slate-800 border-0 focus:ring-2 focus:ring-blue-500 rounded-lg resize-none disabled:opacity-50"
+          placeholder="Your transcript will appear here…"
+          className="w-full h-52 px-4 py-3.5 text-sm leading-relaxed font-mono text-zinc-800 dark:text-zinc-100 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/60 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/50 placeholder-zinc-400 dark:placeholder-zinc-600 disabled:opacity-50 transition-all"
         />
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Characters</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{characterCount}</p>
-        </div>
-        <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Words</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{wordCount}</p>
+        <div className="absolute bottom-3 right-3 text-[11px] text-zinc-400 dark:text-zinc-600 font-medium pointer-events-none select-none">
+          {wordCount}w · {charCount}c
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-2 flex-wrap">
+      {/* Action bar */}
+      <div className="flex items-center gap-1.5 flex-wrap">
         {hasChanges && (
           <button
-            onClick={handleSave}
+            onClick={() => { onSave(editedText); setHasChanges(false); }}
             disabled={isLoading}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 min-w-[120px]"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500 hover:bg-violet-600 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
           >
-            <CheckCircle className="w-4 h-4" />
-            Save Changes
+            <Save className="w-3.5 h-3.5" />
+            Save
           </button>
         )}
 
         <button
           onClick={handleCopy}
           disabled={isLoading || !editedText}
-          className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 min-w-[120px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
         >
-          <Copy className="w-4 h-4" />
+          {isCopied ? (
+            <Check className="w-3.5 h-3.5 text-emerald-500" />
+          ) : (
+            <Copy className="w-3.5 h-3.5" />
+          )}
           {isCopied ? 'Copied!' : 'Copy'}
         </button>
 
         <button
           onClick={onExport}
           disabled={isLoading || !editedText}
-          className="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 min-w-[120px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
         >
-          <Download className="w-4 h-4" />
-          Export
+          <Download className="w-3.5 h-3.5" />
+          Export .txt
         </button>
+
+        <div className="flex-1" />
 
         <button
           onClick={onDelete}
           disabled={isLoading}
-          className="flex-1 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 min-w-[120px]"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all disabled:opacity-50"
         >
-          <Trash2 className="w-4 h-4" />
+          <Trash2 className="w-3.5 h-3.5" />
           Delete
         </button>
       </div>

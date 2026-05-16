@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
-import { Mic, Square, Upload, AlertCircle } from 'lucide-react';
+import { Mic, Square, Upload, X, AlertCircle } from 'lucide-react';
 
 interface AudioRecorderProps {
   onAudioReady: (audio: Blob) => void;
@@ -25,7 +25,7 @@ export const AudioRecorder = ({ onAudioReady, isLoading, disabled }: AudioRecord
       setUploadError(null);
       await startRecording();
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : 'Failed to start recording');
+      setUploadError(error instanceof Error ? error.message : 'Microphone access denied');
     }
   };
 
@@ -33,121 +33,124 @@ export const AudioRecorder = ({ onAudioReady, isLoading, disabled }: AudioRecord
     try {
       const audioBlob = await stopRecording();
       onAudioReady(audioBlob);
-    } catch (error) {
-      setUploadError('Failed to stop recording');
+    } catch {
+      setUploadError('Failed to process recording');
     }
   };
 
   const handleFileSelect = (file: File) => {
     setUploadError(null);
-
-    // Validate file type
-    const validTypes = ['audio/mpeg', 'audio/wav', 'audio/webm', 'audio/m4a', 'audio/mp4'];
-    if (!validTypes.some((type) => file.type.includes(type.split('/')[1]))) {
-      setUploadError('Invalid audio format. Supported: MP3, WAV, WebM, M4A');
+    if (!file.type.startsWith('audio/')) {
+      setUploadError('Invalid file type. Supported: MP3, WAV, WebM, M4A, OGG, FLAC');
       return;
     }
-
-    // Validate file size (25MB limit)
     const MAX_SIZE = 25 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
-      setUploadError(`File too large. Maximum size: 25MB (yours: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
+      setUploadError(`File too large. Max 25MB (yours: ${(file.size / 1024 / 1024).toFixed(1)}MB)`);
       return;
     }
-
     onAudioReady(file);
   };
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    setDragActive(e.type === 'dragenter' || e.type === 'dragover');
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      handleFileSelect(files[0]);
-    }
+    if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0]);
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      handleFileSelect(e.target.files[0]);
-    }
+    if (e.target.files?.[0]) handleFileSelect(e.target.files[0]);
   };
 
   return (
-    <div className="space-y-4">
-      {/* Recording Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-900 rounded-lg p-6 border-2 border-blue-200 dark:border-slate-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Microphone Recording</h3>
+    <div className="space-y-5">
+      {/* Hero mic button area */}
+      <div className="flex flex-col items-center py-6">
+        <div className="relative flex items-center justify-center mb-5">
+          {/* Animated rings when recording */}
           {isRecording && (
-            <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-              <div className="w-2 h-2 bg-red-600 dark:bg-red-400 rounded-full animate-pulse" />
-              <span className="text-sm font-mono">{formatDuration(duration)}</span>
-            </div>
+            <>
+              <div className="absolute w-32 h-32 rounded-full bg-red-500/20 animate-pulse-ring" />
+              <div className="absolute w-32 h-32 rounded-full bg-red-500/20 animate-pulse-ring-delay" />
+            </>
           )}
-        </div>
 
-        <div className="flex gap-3">
-          {!isRecording ? (
+          {isLoading ? (
+            <div className="w-24 h-24 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+              <div className="w-8 h-8 border-2 border-violet-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : !isRecording ? (
             <button
               onClick={handleStartRecording}
               disabled={isLoading || disabled}
-              className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="relative w-24 h-24 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 hover:from-violet-400 hover:to-indigo-500 shadow-xl shadow-violet-500/25 hover:shadow-violet-500/40 hover:scale-105 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100 disabled:shadow-none group"
             >
-              <Mic className="w-5 h-5" />
-              Start Recording
+              <Mic className="w-9 h-9 text-white group-hover:scale-110 transition-transform duration-200" />
             </button>
           ) : (
-            <>
-              <button
-                onClick={handleStopRecording}
-                disabled={isLoading}
-                className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                <Square className="w-5 h-5" />
-                Stop & Transcribe
-              </button>
-              <button
-                onClick={cancelRecording}
-                disabled={isLoading}
-                className="bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </>
+            <button
+              onClick={handleStopRecording}
+              className="relative w-24 h-24 rounded-full bg-red-500 hover:bg-red-400 shadow-xl shadow-red-500/35 hover:scale-105 transition-all duration-200 flex items-center justify-center"
+            >
+              <Square className="w-8 h-8 text-white fill-white" />
+            </button>
           )}
         </div>
+
+        {/* Status text */}
+        {isRecording ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-sm font-medium text-red-500 dark:text-red-400">Recording</span>
+              <span className="text-sm font-mono font-medium text-zinc-600 dark:text-zinc-300">
+                {formatDuration(duration)}
+              </span>
+            </div>
+            <button
+              onClick={cancelRecording}
+              className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
+            >
+              <X className="w-3 h-3" />
+              Cancel
+            </button>
+          </div>
+        ) : isLoading ? (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">Transcribing audio…</p>
+        ) : (
+          <div className="text-center">
+            <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+              {disabled ? 'Add an API key to start' : 'Tap to record'}
+            </p>
+            <p className="text-xs text-zinc-400 dark:text-zinc-600 mt-0.5">
+              or drop a file below · Spacebar shortcut
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-        <span className="text-sm text-slate-500 dark:text-slate-400">OR</span>
-        <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
-      </div>
-
-      {/* Upload Section */}
+      {/* File upload drop zone */}
       <div
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
-        className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        onClick={() => !isLoading && !disabled && fileInputRef.current?.click()}
+        className={`relative border rounded-xl p-4 text-center transition-all duration-200 ${
+          disabled || isLoading
+            ? 'opacity-40 cursor-not-allowed pointer-events-none'
+            : 'cursor-pointer'
+        } ${
           dragActive
-            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-            : 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50'
+            ? 'border-violet-400 bg-violet-50 dark:bg-violet-500/10 dark:border-violet-500'
+            : 'border-dashed border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-800/40'
         }`}
       >
         <input
@@ -157,28 +160,23 @@ export const AudioRecorder = ({ onAudioReady, isLoading, disabled }: AudioRecord
           onChange={handleFileInput}
           className="hidden"
         />
-
-        <div className="flex flex-col items-center gap-3">
-          <Upload className="w-8 h-8 text-slate-400 dark:text-slate-500" />
-          <div>
-            <p className="font-semibold text-slate-900 dark:text-white">Drag & drop your audio file</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">or click to browse (Max 25MB)</p>
-          </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isLoading || disabled}
-            className="mt-2 px-6 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white rounded-lg font-semibold transition-colors disabled:opacity-50"
-          >
-            Browse Files
-          </button>
+        <div className="flex items-center justify-center gap-2.5 text-zinc-400 dark:text-zinc-500">
+          <Upload className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm">
+            Drop audio or{' '}
+            <span className="text-violet-500 dark:text-violet-400 font-medium">browse</span>
+          </span>
+          <span className="hidden sm:block text-xs text-zinc-300 dark:text-zinc-600">
+            MP3 WAV M4A WebM · max 25MB
+          </span>
         </div>
       </div>
 
-      {/* Error Message */}
+      {/* Error */}
       {uploadError && (
-        <div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
-          <p className="text-sm text-red-700 dark:text-red-300">{uploadError}</p>
+        <div className="flex items-center gap-2.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl p-3.5">
+          <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-600 dark:text-red-400">{uploadError}</p>
         </div>
       )}
     </div>

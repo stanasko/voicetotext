@@ -10,9 +10,9 @@ import { TranscriptEditor } from './components/TranscriptEditor';
 import { RateLimitDisplay } from './components/RateLimitDisplay';
 import { HistoryList } from './components/HistoryList';
 import { SettingsModal } from './components/SettingsModal';
+import { Key } from 'lucide-react';
 
 function App() {
-  // State Management
   const [apiKey, setApiKey] = useLocalStorage<string>('groq_api_key', '');
   const [isDark, setIsDark] = useLocalStorage<boolean>('theme_dark', false);
   const [showSettings, setShowSettings] = useState(!apiKey);
@@ -20,15 +20,12 @@ function App() {
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Groq API
   const { transcribe, isLoading, error, rateLimits } = useGroqAPI(apiKey || null);
 
-  // Load transcripts on mount
   useEffect(() => {
     loadTranscripts();
   }, []);
 
-  // Keyboard shortcuts
   useKeyboardShortcuts({
     onCopy: () => selectedTranscript && navigator.clipboard.writeText(selectedTranscript.text),
     onExport: () => selectedTranscript && handleExportTranscript(),
@@ -36,13 +33,8 @@ function App() {
     onSettings: () => setShowSettings(true),
   });
 
-  // Apply dark mode
   useEffect(() => {
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
   const loadTranscripts = async () => {
@@ -55,7 +47,6 @@ function App() {
       setShowSettings(true);
       return;
     }
-
     const result = await transcribe(audioFile);
     if (result?.text) {
       const transcript: Transcript = {
@@ -63,11 +54,10 @@ function App() {
         text: result.text,
         originalAudio: audioFile instanceof Blob ? audioFile : undefined,
         timestamp: Date.now(),
-        duration: 0, // We don't have duration from Groq response
+        duration: 0,
         language: result.language || 'unknown',
         edited: false,
       };
-
       await dbService.addTranscript(transcript);
       setSelectedTranscript(transcript);
       await loadTranscripts();
@@ -76,7 +66,6 @@ function App() {
 
   const handleSaveTranscript = async (text: string) => {
     if (!selectedTranscript) return;
-
     const updated = { ...selectedTranscript, text, edited: true };
     await dbService.updateTranscript(selectedTranscript.id, updated);
     setSelectedTranscript(updated);
@@ -85,33 +74,19 @@ function App() {
 
   const handleDeleteTranscript = async (id: string) => {
     await dbService.deleteTranscript(id);
-    if (selectedTranscript?.id === id) {
-      setSelectedTranscript(null);
-    }
+    if (selectedTranscript?.id === id) setSelectedTranscript(null);
     await loadTranscripts();
   };
 
   const handleExportTranscript = () => {
     if (!selectedTranscript) return;
-
-    const content = `Transcript
-Date: ${new Date(selectedTranscript.timestamp).toLocaleString()}
-Language: ${selectedTranscript.language}
-Duration: ${Math.ceil(selectedTranscript.duration / 60)}m
-Edited: ${selectedTranscript.edited ? 'Yes' : 'No'}
-
----
-
-${selectedTranscript.text}
-`;
-
-    const element = document.createElement('a');
-    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
-    element.setAttribute('download', `transcript-${selectedTranscript.id.slice(0, 8)}.txt`);
-    element.style.display = 'none';
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+    const content = `Transcript\nDate: ${new Date(selectedTranscript.timestamp).toLocaleString()}\nLanguage: ${selectedTranscript.language}\n\n---\n\n${selectedTranscript.text}`;
+    const el = document.createElement('a');
+    el.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
+    el.setAttribute('download', `transcript-${selectedTranscript.id.slice(0, 8)}.txt`);
+    document.body.appendChild(el);
+    el.click();
+    document.body.removeChild(el);
   };
 
   const filteredTranscripts = useMemo(() => {
@@ -123,30 +98,39 @@ ${selectedTranscript.text}
 
   return (
     <div className={isDark ? 'dark' : ''}>
-      <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
-        {/* Header */}
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
         <Header
           isDark={isDark}
           onThemeToggle={() => setIsDark(!isDark)}
           onSettingsClick={() => setShowSettings(true)}
         />
 
-        {/* Main Content */}
-        <main className="max-w-6xl mx-auto px-4 py-8">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+          {/* No API key prompt */}
           {!apiKey && (
-            <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-              <p className="text-sm text-blue-800 dark:text-blue-200">
-                📌 No API key configured. Click the settings icon to add your Groq API key.
-              </p>
-            </div>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-full mb-5 flex items-center gap-3 px-4 py-3.5 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 rounded-2xl text-left hover:bg-violet-100 dark:hover:bg-violet-500/15 transition-colors group"
+            >
+              <div className="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-violet-200 dark:group-hover:bg-violet-500/30 transition-colors">
+                <Key className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-violet-800 dark:text-violet-200">
+                  Add your Groq API key to start transcribing
+                </p>
+                <p className="text-xs text-violet-500 dark:text-violet-400 mt-0.5">
+                  Free · stored locally · never shared
+                </p>
+              </div>
+            </button>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - Recording & Editor */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Recording Section */}
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
-                <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Record or Upload</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Left column: recorder + editor */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Recorder card */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl p-6 shadow-sm">
                 <AudioRecorder
                   onAudioReady={handleAudioReady}
                   isLoading={isLoading}
@@ -154,18 +138,19 @@ ${selectedTranscript.text}
                 />
               </div>
 
-              {/* Rate Limit Display */}
-              {rateLimits && (
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
-                  <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">API Usage</h2>
-                  <RateLimitDisplay rateLimits={rateLimits} />
+              {/* Error */}
+              {error && (
+                <div className="px-4 py-3.5 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-2xl">
+                  <p className="text-sm text-red-600 dark:text-red-400">{error.message}</p>
                 </div>
               )}
 
-              {/* Transcript Editor */}
+              {/* Transcript editor */}
               {selectedTranscript && (
-                <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
-                  <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">Transcript Editor</h2>
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+                  <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-4">
+                    Transcript
+                  </p>
                   <TranscriptEditor
                     text={selectedTranscript.text}
                     isLoading={isLoading}
@@ -175,49 +160,53 @@ ${selectedTranscript.text}
                   />
                 </div>
               )}
-
-              {/* Error Display */}
-              {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-700 dark:text-red-300">
-                    <strong>Error:</strong> {error.message}
-                  </p>
-                </div>
-              )}
             </div>
 
-            {/* Right Column - History */}
-            <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-slate-800 rounded-lg p-6 border border-slate-200 dark:border-slate-700 shadow-sm sticky top-20">
-                <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-white">History</h2>
+            {/* Right column: rate limit + history */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Rate limit */}
+              {rateLimits && (
+                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl px-5 py-4 shadow-sm">
+                  <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-3">
+                    API Usage
+                  </p>
+                  <RateLimitDisplay rateLimits={rateLimits} />
+                </div>
+              )}
+
+              {/* History card */}
+              <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl p-5 shadow-sm lg:sticky lg:top-20">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
+                    History
+                  </p>
+                  <span className="text-xs text-zinc-400 dark:text-zinc-500 tabular-nums">
+                    {filteredTranscripts.length}
+                  </span>
+                </div>
 
                 {/* Search */}
-                <input
-                  type="text"
-                  placeholder="Search transcripts..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-4"
-                />
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    placeholder="Search transcripts…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-3 py-2 text-sm bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-xl text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/50 transition-all"
+                  />
+                </div>
 
-                {/* Transcript List */}
                 <HistoryList
                   transcripts={filteredTranscripts}
                   onSelect={setSelectedTranscript}
                   onDelete={handleDeleteTranscript}
                   isLoading={isLoading}
                 />
-
-                {/* Count */}
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-4">
-                  {filteredTranscripts.length} transcript{filteredTranscripts.length !== 1 ? 's' : ''}
-                </p>
               </div>
             </div>
           </div>
         </main>
 
-        {/* Settings Modal */}
         <SettingsModal
           isOpen={showSettings}
           onClose={() => setShowSettings(false)}

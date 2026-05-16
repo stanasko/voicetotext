@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, Eye, EyeOff, ShieldCheck, AlertTriangle, CheckCircle, ExternalLink } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,16 +8,11 @@ interface SettingsModalProps {
   onApiKeyChange: (key: string) => void;
 }
 
-export const SettingsModal = ({
-  isOpen,
-  onClose,
-  apiKey,
-  onApiKeyChange,
-}: SettingsModalProps) => {
+export const SettingsModal = ({ isOpen, onClose, apiKey, onApiKeyChange }: SettingsModalProps) => {
   const [inputKey, setInputKey] = useState(apiKey);
   const [showKey, setShowKey] = useState(false);
   const [isTestingKey, setIsTestingKey] = useState(false);
-  const [keyStatus, setKeyStatus] = useState<'idle' | 'valid' | 'invalid' | null>(null);
+  const [keyStatus, setKeyStatus] = useState<'valid' | 'invalid' | null>(null);
 
   useEffect(() => {
     setInputKey(apiKey);
@@ -26,13 +21,12 @@ export const SettingsModal = ({
   const handleSaveKey = () => {
     if (inputKey.trim()) {
       onApiKeyChange(inputKey.trim());
-      setKeyStatus('idle');
       onClose();
     }
   };
 
   const handleClearKey = () => {
-    if (confirm('Are you sure you want to delete the saved API key? You will need to enter it again next time.')) {
+    if (confirm("Delete saved API key? You'll need to re-enter it to use the app.")) {
       setInputKey('');
       onApiKeyChange('');
       setKeyStatus(null);
@@ -40,29 +34,14 @@ export const SettingsModal = ({
   };
 
   const handleTestKey = async () => {
-    if (!inputKey.trim()) {
-      setKeyStatus('invalid');
-      return;
-    }
-
+    if (!inputKey.trim()) { setKeyStatus('invalid'); return; }
     setIsTestingKey(true);
     try {
-      // We'll test by making a simple API call - we can't actually test without an audio file,
-      // but we can check if the key format is valid and accessible
       const response = await fetch('https://api.groq.com/openai/v1/models', {
-        headers: {
-          'Authorization': `Bearer ${inputKey.trim()}`,
-        },
+        headers: { Authorization: `Bearer ${inputKey.trim()}` },
       });
-
-      if (response.ok) {
-        setKeyStatus('valid');
-      } else if (response.status === 401) {
-        setKeyStatus('invalid');
-      } else {
-        setKeyStatus('invalid');
-      }
-    } catch (error) {
+      setKeyStatus(response.ok ? 'valid' : 'invalid');
+    } catch {
       setKeyStatus('invalid');
     } finally {
       setIsTestingKey(false);
@@ -72,121 +51,119 @@ export const SettingsModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 dark:bg-black/70">
-      <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-96 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Sheet */}
+      <div className="relative bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/8 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:max-w-md overflow-hidden">
+        {/* Mobile drag handle */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-8 h-1 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700 sticky top-0 bg-white dark:bg-slate-800">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">Settings</h2>
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-zinc-100 dark:border-white/5">
+          <div>
+            <h2 className="text-[15px] font-semibold text-zinc-900 dark:text-white">Settings</h2>
+            <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-0.5">Groq API configuration</p>
+          </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
           >
-            <X className="w-6 h-6 text-slate-600 dark:text-slate-400" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
-          {/* Security Warning */}
-          <div className="flex gap-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold text-amber-900 dark:text-amber-100 text-sm">Security Notice</p>
-              <p className="text-xs text-amber-800 dark:text-amber-200 mt-1">
-                Your API key is stored locally in your browser only. It is never sent to any server except Groq's API. Keep it private.
-              </p>
-            </div>
+        {/* Body */}
+        <div className="px-6 py-5 space-y-5">
+          {/* Security notice */}
+          <div className="flex gap-3 items-start p-3.5 bg-emerald-50 dark:bg-emerald-500/8 border border-emerald-100 dark:border-emerald-500/15 rounded-xl">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+              Your key is stored <strong>only in this browser</strong> and sent directly to Groq.
+              It never passes through any server.
+            </p>
           </div>
 
-          {/* API Key Input */}
-          <div className="space-y-3">
-            <label className="block font-semibold text-slate-900 dark:text-white text-sm">
-              Groq API Key
-            </label>
-            <div className="relative">
-              <input
-                type={showKey ? 'text' : 'password'}
-                value={inputKey}
-                onChange={(e) => {
-                  setInputKey(e.target.value);
-                  setKeyStatus(null);
-                }}
-                placeholder="gsk_..."
-                className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <button
-                onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-              >
-                {showKey ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-
-            {/* Status Indicator */}
-            {keyStatus === 'valid' && (
-              <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm">
-                <CheckCircle className="w-4 h-4" />
-                API key is valid
-              </div>
-            )}
-            {keyStatus === 'invalid' && (
-              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
-                <AlertTriangle className="w-4 h-4" />
-                API key is invalid or expired
-              </div>
-            )}
-
-            {/* Help Text */}
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Get your free API key at{' '}
+          {/* API Key field */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                Groq API Key
+              </label>
               <a
                 href="https://console.groq.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 dark:text-blue-400 hover:underline"
+                className="flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400 hover:underline"
               >
-                console.groq.com
+                Get free key
+                <ExternalLink className="w-3 h-3" />
               </a>
-            </p>
+            </div>
+
+            <div className="relative">
+              <input
+                type={showKey ? 'text' : 'password'}
+                value={inputKey}
+                onChange={(e) => { setInputKey(e.target.value); setKeyStatus(null); }}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveKey()}
+                placeholder="gsk_…"
+                className="w-full px-4 py-2.5 pr-10 text-sm bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 rounded-xl text-zinc-900 dark:text-white placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400/50 font-mono transition-all"
+              />
+              <button
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+              >
+                {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            {keyStatus === 'valid' && (
+              <div className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                <CheckCircle className="w-3.5 h-3.5" />
+                Connection successful
+              </div>
+            )}
+            {keyStatus === 'invalid' && (
+              <div className="flex items-center gap-1.5 text-xs text-red-500 dark:text-red-400">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Invalid or expired API key
+              </div>
+            )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="space-y-2 flex flex-col">
-            <button
-              onClick={handleTestKey}
-              disabled={!inputKey.trim() || isTestingKey}
-              className="w-full px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
-            >
-              {isTestingKey ? 'Testing...' : 'Test Connection'}
-            </button>
-
+          {/* Actions */}
+          <div className="space-y-2 pb-1">
             <button
               onClick={handleSaveKey}
               disabled={!inputKey.trim()}
-              className="w-full px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-colors disabled:opacity-50"
+              className="w-full py-2.5 bg-violet-500 hover:bg-violet-600 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors"
             >
-              Save API Key
+              Save & Continue
             </button>
-
-            {apiKey && (
+            <div className="flex gap-2">
               <button
-                onClick={handleClearKey}
-                className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition-colors"
+                onClick={handleTestKey}
+                disabled={!inputKey.trim() || isTestingKey}
+                className="flex-1 py-2 bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 disabled:opacity-40 text-zinc-700 dark:text-zinc-300 text-sm font-medium rounded-xl transition-colors"
               >
-                Delete Saved Key
+                {isTestingKey ? 'Testing…' : 'Test Key'}
               </button>
-            )}
-
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600 text-slate-900 dark:text-white font-semibold rounded-lg transition-colors"
-            >
-              Close
-            </button>
+              {apiKey && (
+                <button
+                  onClick={handleClearKey}
+                  className="flex-1 py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 text-sm font-medium rounded-xl transition-colors"
+                >
+                  Clear Key
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
