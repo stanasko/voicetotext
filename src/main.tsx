@@ -12,7 +12,7 @@ createRoot(document.getElementById('root')!).render(
 // Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/VoiceToText/service-worker.js')
+    navigator.serviceWorker.register('/voicetotext/service-worker.js')
       .then((registration) => {
         console.log('Service Worker registered:', registration);
       })
