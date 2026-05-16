@@ -1,78 +1,67 @@
-const CACHE_NAME = 'voicetotext-v1';
-const urlsToCache = [
-  '/VoiceToText/',
-  '/VoiceToText/index.html',
-  '/VoiceToText/manifest.json',
+const CACHE_NAME = 'voicetotext-v2';
+const STATIC_ASSETS = [
+  '/voicetotext/',
+  '/voicetotext/index.html',
+  '/voicetotext/manifest.json',
+  '/voicetotext/icon-192.svg',
+  '/voicetotext/icon-512.svg',
 ];
 
-// Install event
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache).catch(() => {
-        // If caching fails, continue anyway
-        console.log('Cache installation incomplete');
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(STATIC_ASSETS).catch(() => {
+        // Continue even if some assets fail to cache
+      })
+    )
   );
   self.skipWaiting();
 });
 
-// Activate event
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
   );
   self.clients.claim();
 });
 
-// Fetch event
 self.addEventListener('fetch', (event) => {
-  // Don't cache API requests
-  if (event.request.url.includes('api.groq.com')) {
+  const url = new URL(event.request.url);
+
+  // Always go to network for API calls
+  if (url.hostname === 'api.groq.com') {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Network-first for HTML (so updates deploy immediately)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response('API request failed', { status: 503 });
-      })
+      fetch(event.request)
+        .then((res) => {
+          const clone = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
+          return res;
+        })
+        .catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first strategy for assets
+  // Cache-first for static assets (JS, CSS, images)
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-
-      return fetch(event.request)
-        .then((response) => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type === 'error') {
-            return response;
+    caches.match(event.request).then(
+      (cached) =>
+        cached ||
+        fetch(event.request).then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(event.request, clone));
           }
-
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
-
-          return response;
+          return res;
         })
-        .catch(() => {
-          // Return offline page if available
-          return new Response('Offline - please check your internet connection', {
-            status: 503,
-          });
-        });
-    })
+    )
   );
 });

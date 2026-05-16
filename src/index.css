@@ -12,10 +12,30 @@
 
 body {
   margin: 0;
+  background: #f2f2f7;
+}
+
+.dark body {
+  background: #08080e;
+}
+
+/* Subtle violet gradient halo at top in dark mode */
+.dark #root::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 500px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(124, 58, 237, 0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 #root {
   min-height: 100vh;
+  position: relative;
 }
 
 @keyframes pulse-ring {
@@ -29,13 +49,4 @@ body {
 
 .animate-pulse-ring-delay {
   animation: pulse-ring 1.8s ease-out 0.65s infinite;
-}
-
-@keyframes spin-smooth {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin-smooth {
-  animation: spin-smooth 0.8s linear infinite;
 }

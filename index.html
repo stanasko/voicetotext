@@ -2,16 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/voicetotext/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/voicetotext/icon-192.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#2563eb" />
-    <meta name="description" content="Fast and secure audio transcription using Groq Whisper API" />
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="description" content="Fast audio transcription using Groq Whisper" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="VoiceToText" />
     <link rel="manifest" href="/voicetotext/manifest.json" />
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232563eb' width='180' height='180'/><text x='50%' y='50%' font-size='100' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle' font-family='Arial'>V</text></svg>" />
-    <title>VoiceToText - Audio Transcription</title>
+    <link rel="apple-touch-icon" href="/voicetotext/icon-192.svg" />
+    <title>VoiceToText</title>
+    <!-- Prevent dark mode flash -->
+    <script>
+      try {
+        if (JSON.parse(localStorage.getItem('theme_dark') ?? 'true')) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -14,7 +14,7 @@ import { Key } from 'lucide-react';
 
 function App() {
   const [apiKey, setApiKey] = useLocalStorage<string>('groq_api_key', '');
-  const [isDark, setIsDark] = useLocalStorage<boolean>('theme_dark', false);
+  const [isDark, setIsDark] = useLocalStorage<boolean>('theme_dark', true);
   const [showSettings, setShowSettings] = useState(!apiKey);
   const [selectedTranscript, setSelectedTranscript] = useState<Transcript | null>(null);
   const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -98,7 +98,7 @@ function App() {
 
   return (
     <div className={isDark ? 'dark' : ''}>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 transition-colors duration-200">
+      <div className="min-h-screen bg-[#f2f2f7] dark:bg-[#08080e] transition-colors duration-200">
         <Header
           isDark={isDark}
           onThemeToggle={() => setIsDark(!isDark)}
@@ -130,7 +130,7 @@ function App() {
             {/* Left column: recorder + editor */}
             <div className="lg:col-span-2 space-y-4">
               {/* Recorder card */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+              <div className="bg-white dark:bg-[#0f0f17] border border-zinc-200/70 dark:border-white/5 rounded-2xl p-6 shadow-sm">
                 <AudioRecorder
                   onAudioReady={handleAudioReady}
                   isLoading={isLoading}
@@ -147,7 +147,7 @@ function App() {
 
               {/* Transcript editor */}
               {selectedTranscript && (
-                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl p-6 shadow-sm">
+                <div className="bg-white dark:bg-[#0f0f17] border border-zinc-200/70 dark:border-white/5 rounded-2xl p-6 shadow-sm">
                   <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-4">
                     Transcript
                   </p>
@@ -166,7 +166,7 @@ function App() {
             <div className="lg:col-span-1 space-y-4">
               {/* Rate limit */}
               {rateLimits && (
-                <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl px-5 py-4 shadow-sm">
+                <div className="bg-white dark:bg-[#0f0f17] border border-zinc-200/70 dark:border-white/5 rounded-2xl px-5 py-4 shadow-sm">
                   <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mb-3">
                     API Usage
                   </p>
@@ -175,7 +175,7 @@ function App() {
               )}
 
               {/* History card */}
-              <div className="bg-white dark:bg-zinc-900 border border-zinc-200/60 dark:border-white/5 rounded-2xl p-5 shadow-sm lg:sticky lg:top-20">
+              <div className="bg-white dark:bg-[#0f0f17] border border-zinc-200/70 dark:border-white/5 rounded-2xl p-5 shadow-sm lg:sticky lg:top-20">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
                     History
