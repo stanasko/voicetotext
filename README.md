@@ -1,73 +1,179 @@
-# React + TypeScript + Vite
+# VoiceToText 🎤
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Fast and secure audio transcription PWA using Groq's Whisper API. Record or upload audio files and get instant transcriptions in 90+ languages.
 
-Currently, two official plugins are available:
+**Live Demo:** https://stanasko.github.io/voicetotext/
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+### Core Functionality
+- 🎙️ **Real-time Audio Recording** - Record directly from your microphone
+- 📤 **Drag & Drop Upload** - Upload MP3, WAV, WebM, M4A files (up to 25MB)
+- ⚡ **Instant Transcription** - Powered by Groq's ultra-fast Whisper model
+- 🌍 **Multi-language Support** - Automatic language detection (90+ languages)
+- 📝 **Text Editor** - Edit transcriptions with character/word count
+- 💾 **Local Storage** - All data stored locally on your device
+- 📋 **History Management** - Access previous transcriptions anytime
+- 💾 **Export to .txt** - Download transcriptions as text files
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Advanced Features
+- 🌙 **Dark/Light Mode** - Toggle between themes
+- ⌨️ **Keyboard Shortcuts**
+  - `Ctrl+C` / `Cmd+C` - Copy transcript
+  - `Ctrl+E` / `Cmd+E` - Export transcript
+  - `Ctrl+D` / `Cmd+D` - Delete transcript
+  - `Ctrl+Shift+S` / `Cmd+Shift+S` - Open settings
+- 📊 **Rate Limit Display** - Real-time API usage tracking
+- 🔒 **Privacy-First** - API key stored locally only
+- 📱 **PWA Features** - Installable on all devices
+- 🔌 **Offline Support** - Access your history offline
 
-## Expanding the ESLint configuration
+## 🚀 Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
+- Modern web browser (Chrome, Firefox, Safari, Edge)
+- Free Groq API key from [console.groq.com](https://console.groq.com)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Installation
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+#### Option 1: Online (Recommended)
+Visit **https://stanasko.github.io/voicetotext/** and start using immediately.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+#### Option 2: Install as PWA
+1. Visit the live demo link above
+2. Click "Install" button in your browser
+3. Use like a native app on iOS, Android, Windows, or macOS
+
+#### Option 3: Run Locally
+```bash
+# Clone the repository
+git clone https://github.com/stanasko/voicetotext.git
+cd voicetotext
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🔐 Security & Privacy
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Your API key is **never sent to any server except Groq's**:
+- ✅ Stored locally in browser (localStorage)
+- ✅ No backend server involved
+- ✅ Direct API calls from browser to Groq
+- ✅ Full HTTPS encryption
+- ✅ You control your data completely
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 📊 API Usage
+
+### Free Tier Limits (Groq)
+- **2,000 requests per day**
+- **7,200 audio seconds per hour** (~2 hours per hour)
+- **25MB maximum file size**
+- No credit card required
+
+The app displays real-time usage stats via HTTP headers.
+
+## 🛠️ Tech Stack
+
+- **Frontend**: React 18 + TypeScript
+- **Build**: Vite
+- **Styling**: Tailwind CSS
+- **Storage**: IndexedDB (history) + localStorage (settings)
+- **Audio**: Web Audio API
+- **API**: Groq Whisper
+- **PWA**: Service Workers + Web Manifest
+- **Deployment**: GitHub Pages
+
+## 📖 How to Use
+
+### Step 1: Add API Key
+1. Click ⚙️ (Settings) in top-right
+2. Go to https://console.groq.com to get your free API key
+3. Paste your key and save
+
+### Step 2: Record or Upload
+- **Record**: Click "Start Recording" and speak
+- **Upload**: Drag & drop a file or click "Browse Files"
+
+### Step 3: Transcribe
+Click "Stop & Transcribe" to send audio to Groq
+
+### Step 4: Edit & Export
+- Edit the text directly
+- Copy to clipboard
+- Export as .txt file
+- Delete from history if no longer needed
+
+## 🎯 Use Cases
+
+- 📝 Meeting transcriptions
+- 🎓 Lecture notes
+- 🎙️ Podcast transcripts
+- 📞 Call recordings
+- 🗣️ Language learning
+- 📋 Documentation
+
+## ⌨️ Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+C` / `Cmd+C` | Copy transcript |
+| `Ctrl+E` / `Cmd+E` | Export as .txt |
+| `Ctrl+D` / `Cmd+D` | Delete transcript |
+| `Ctrl+Shift+S` / `Cmd+Shift+S` | Open settings |
+
+## 🌐 Browser Support
+
+- ✅ Chrome/Chromium 90+
+- ✅ Firefox 88+
+- ✅ Safari 14.1+
+- ✅ Edge 90+
+- ✅ Mobile browsers (iOS Safari, Android Chrome)
+
+## 📦 Installation Size
+
+- **HTML/CSS/JS Bundle**: ~360KB (gzipped: ~115KB)
+- **No external CDNs** - everything bundled
+- **Fast loading** on 3G+ connections
+
+## 🔄 Updates & Deployment
+
+This app uses GitHub Actions for automatic deployment:
+- Every push to `main` branch triggers build
+- Automatically deployed to GitHub Pages
+- Zero downtime updates
+
+## 📄 License
+
+MIT License - Feel free to use and modify
+
+## 🤝 Contributing
+
+Found a bug or have a feature request? 
+- Open an issue on [GitHub](https://github.com/stanasko/voicetotext/issues)
+- Fork and submit a pull request
+
+## 📞 Support
+
+- **Groq API Issues**: https://community.groq.com
+- **Bug Reports**: GitHub Issues
+- **Feature Requests**: GitHub Discussions
+
+## 🙏 Acknowledgments
+
+- **Groq** for the incredibly fast Whisper API
+- **React** and **Vite** for the awesome developer experience
+- **Tailwind CSS** for beautiful styling
+- **OpenAI** for Whisper model
+
+---
+
+**Made with ❤️ for fast, secure, and private audio transcription**
+
+Visit: https://stanasko.github.io/voicetotext/
